@@ -85,6 +85,9 @@ const SizeDistribution_df = DataFrame(
 
 const SizeDistribution_filename = Signal(Dates.format(now(), "yyyymmdd_HHMM") * ".jld2")
 
+const ninv = CircularBuffer{SizeDistribution}(100)
+const response = CircularBuffer{SizeDistribution}(100)
+
 # GTK Stuff
 #
 # terminate the script
@@ -104,18 +107,19 @@ const id5 = signal_connect(powerSMPSswitch, gui["UltravoltEnableSMPS"], "state-s
 
 # Set up list store
 const viewport = gui["tree"]
-const listStore = GtkListStore(String, String, String, String, String, String)
+const listStore = GtkListStore(Int, String, String, String, String, String, String)
 const treeView = GtkTreeView(GtkTreeModel(listStore))
 const renderText = GtkCellRendererText()
 const scrolledWindow = Gtk.ScrolledWindow()
 const vAdjust = get_gtk_property(scrolledWindow, :vadjustment, GtkAdjustment)
 
-const c1 = GtkTreeViewColumn("Time (HH:MM)", renderText, Dict([("text", 0)]))
-const c2 = GtkTreeViewColumn("RH (%)", renderText, Dict([("text", 1)]))
-const c3 = GtkTreeViewColumn("Number (cm-3)", renderText, Dict([("text", 2)]))
-const c4 = GtkTreeViewColumn("Area (μm2 cm-3)", renderText, Dict([("text", 3)]))
-const c5 = GtkTreeViewColumn("Volume (μm3 cm-3)", renderText, Dict([("text", 4)]))
-const c6 = GtkTreeViewColumn("CPC (cm-3)", renderText, Dict([("text", 5)]))
+const c0 = GtkTreeViewColumn("ID", renderText, Dict([("text", 0)]))
+const c1 = GtkTreeViewColumn("Time (HH:MM)", renderText, Dict([("text", 1)]))
+const c2 = GtkTreeViewColumn("RH (%)", renderText, Dict([("text", 2)]))
+const c3 = GtkTreeViewColumn("Number (cm-3)", renderText, Dict([("text", 3)]))
+const c4 = GtkTreeViewColumn("Area (μm2 cm-3)", renderText, Dict([("text", 4)]))
+const c5 = GtkTreeViewColumn("Volume (μm3 cm-3)", renderText, Dict([("text", 5)]))
+const c6 = GtkTreeViewColumn("CPC (cm-3)", renderText, Dict([("text", 6)]))
 
 const selection =
     @> GAccessor.selection(treeView) GAccessor.mode(Gtk.GConstants.GtkSelectionMode.SINGLE)

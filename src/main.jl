@@ -18,6 +18,7 @@ using DifferentialMobilityAnalyzers
 using Lazy
 using NumericIO
 using Underscores
+using DataStructures
 
 import NumericIO: UEXPONENT
 
@@ -77,5 +78,16 @@ end
 const tenHzSMPSLoop = map(_ -> tenHz_smps_loop(), tenHz)   # 10 Hz SMPS
 
 push!(smps_scan_state, "DONE")                # Termination signal to start new file
+
+signal_connect(selection, "changed") do widget
+    if hasselection(selection)
+        n = @_ map(listStore[_,1], 1:length(listStore)) |> maximum
+        c = n - listStore[selected(selection),1] 
+        addseries!(reverse(ninv[end].Dp), reverse(ninv[end].S), plot5, gplot5, 1, false, true)
+        addseries!(reverse(ninv[end-c].Dp), reverse(ninv[end-c].S), plot5, gplot5, 2, false, true)
+        addseries!(reverse(response[end-c].Dp), reverse(response[end-c].N), plot4, gplot4, 2, false, true)
+    end
+end
+
 
 :DONE

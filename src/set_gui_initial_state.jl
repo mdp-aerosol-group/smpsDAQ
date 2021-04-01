@@ -22,8 +22,8 @@ a.xlabel = "Diameter (nm)"
 a.ylabels = ["Raw concentration (cm-3)"]
 mp4, gplot4 = push_plot_to_gui!(plot4, gui["AerosolSizeDistribution2"], wnd)
 wfrm = add(plot4, [0.0], [0.0], id = "Current Scan")
-wfrm.line = line(color = black, width = 2, style = style)
-wfrm = add(plot4, [0.0], [0.0], id = "Past Scan")
+wfrm.line = line(color = red, width = 2, style = style)
+wfrm = add(plot4, [0.0], [0.0], id = "Selected Scan")
 wfrm.line = line(color = mblue, width = 2, style = style)
 wfrm = add(plot4, [0.0], [0.0], id = "Current D")
 wfrm.line = line(color = black, width = 2, style = :solid)
@@ -56,9 +56,9 @@ a = plot5.annotation
 a.xlabel = "Diameter (nm)"
 a.ylabels = ["Inverted dN/dlnD (cm-3)"]
 mp5, gplot5 = push_plot_to_gui!(plot5, gui["AerosolSizeDistribution1"], wnd)
-wfrm = add(plot5, [0.0], [0.0], id = "Current Scan")
-wfrm.line = line(color = black, width = 2, style = style)
-wfrm = add(plot5, [0.0], [0.0], id = "Past Scan")
+wfrm = add(plot5, [0.0], [0.0], id = "Completed Scan")
+wfrm.line = line(color = mgrey, width = 2, style = style)
+wfrm = add(plot5, [0.0], [0.0], id = "Selected Scan")
 wfrm.line = line(color = mblue, width = 2, style = style)
 
 graph = plot5.strips[1]
@@ -95,13 +95,13 @@ Gtk.set_gtk_property!(gui["ScanCounter"], :text, "1000")
 Gtk.set_gtk_property!(gui["ScanState"], :text, "HOLD");
 Gtk.set_gtk_property!(gui["setV"], :text, "0");
 
-push!(treeView, c1, c2, c3, c4, c5, c6)
+push!(treeView, c0, c1, c2, c3, c4, c5, c6)
 push!(scrolledWindow, treeView)
 push!(viewport, scrolledWindow)
 
-@_ map(GAccessor.resizable(_, true), [c1, c2, c3, c4, c5, c6])
-@_ map(GAccessor.sort_column_id(_[2], _[1]), enumerate([c1, c2, c3, c4, c5, c6]))
-@_ map(GAccessor.reorderable(_[2], _[1]), enumerate([c1, c2, c3, c4, c5, c6]))
+@_ map(GAccessor.resizable(_, true), [c0, c1, c2, c3, c4, c5, c6])
+@_ map(GAccessor.sort_column_id(_[2], _[1]), enumerate([c0, c1, c2, c3, c4, c5, c6]))
+@_ map(GAccessor.reorderable(_[2], _[1]), enumerate([c0, c1, c2, c3, c4, c5, c6]))
 
 # Set the three voltages as initial condition
 set_voltage_SMPS("StartDiameter", "StartV")

@@ -74,7 +74,7 @@ function smps_signals()
             # Compute inversion and L-curve (see Petters (2018), Notebooks 5 and 6)
             λ₁ = parse_box("LambdaLow", 0.05)
             λ₂ = parse_box("LambdaHigh", 0.05)
-            N = @> rinv2(ℝ.value.N, δˢᵐᵖˢ, λ₁ = λ₁, λ₂ = λ₂) getfield(:N) clean
+            N = @> rinv2(ℝ.value.N, δˢᵐᵖˢ, λ₁ = λ₁, λ₂ = λ₂, order = 2, initial = false) getfield(:N) clean
             𝕟 = SizeDistribution(
                 [],
                 ℝ.value.De,
@@ -99,6 +99,21 @@ function smps_signals()
                     :useCounts => useCounts,
                 ),
             )
+
+            # Write to GUI
+            ID = smps_scan_number.value
+            ta = Dates.format((tenHz_df[!, :Timestamp])[1], "HH:MM")
+            mRH = parse_missing(oneHz_df[!, :RHsh] |> mean)
+            mN = parse_missing(inversionParameters[end, :N])
+            mA = parse_missing(inversionParameters[end, :A])
+            mV = parse_missing(inversionParameters[end, :V])
+            mCPC = parse_missing(inversionParameters[end, :Ncpc])
+
+            insert!(listStore,1,(ID, ta, mRH, mN, mA, mV, mCPC))
+            set_gtk_property!(vAdjust, :value, 0.0)
+
+            push!(ninv, 𝕟)
+            push!(response, ℝ.value)
 
             push!(
                 SizeDistribution_df,

@@ -15,15 +15,14 @@ function oneHz_smps_loop()
     N =
         (useCounts == true) ? deepcopy(tenHz_df[!, :N1cpcCount]) :
         deepcopy(tenHz_df[!, :N1cpcSerial])
-    τᶜ = get_gtk_property(gui["PlumbTime"], :text, String) |> x -> parse(Float64, x)
-    τserial = get_gtk_property(gui["SerialDelay"], :text, String) |> x -> parse(Float64, x)
+    τᶜ = @>> get_gtk_property(gui["PlumbTime"], :text, String) parse(Float64)
+    τserial = @>> get_gtk_property(gui["SerialDelay"], :text, String) parse(Float64)
     (useCounts == false) && (τᶜ += τserial)
     τ = parse_box("BeamTransitTime", 4.0)
 
     correct = @. x ->
         -lambertw(-x * flowRate1 * 16.666τ * 1e-6, 0) / (flowRate1 * 16.6666 * τ * 1e-6)
-    currentDiameter =
-        get_gtk_property(gui["currentD"], :text, String) |> x -> parse(Float64, x)
+    currentDiameter = @>> get_gtk_property(gui["currentD"], :text, String) parse(Float64)
     if length(N[state.==:SCAN]) > τᶜ * 10 + 1
         N = circshift(N, Int(round(-τᶜ * 10)))
         N = N[(state.==:SCAN).|(state.==:FLUSH)]
@@ -75,11 +74,6 @@ function tenHz_smps_loop()
     polarity = get_gtk_property(gui["ColumnPolaritySMPS"], "active-id", String) |> Symbol
     powerSwitch = get_gtk_property(gui["UltravoltEnableSMPS"], :state, Bool)
     AIN, Tk, rawcount, count = labjack_signals.value # Unpack signals
-
-    voltageReadPositive = AIN[4] * 1000.0
-    currentReadPositive = -AIN[3] * 0.167 * 1000.0
-    voltageReadNegative = AIN[2] * 1000.0
-    currentReadNegative = -AIN[1] * 0.167 * 1000.0
 
     N1cpcCount = count[1] / tenHz.value / (flowRate1 * 16.6666)  # Compute concentration
     N2cpcCount = count[2] / tenHz.value / (flowRate2 * 16.6666)  # Compute concentration
