@@ -74,7 +74,8 @@ function smps_signals()
             # Compute inversion and L-curve (see Petters (2018), Notebooks 5 and 6)
             λ₁ = parse_box("LambdaLow", 0.05)
             λ₂ = parse_box("LambdaHigh", 0.05)
-            N = @> rinv2(ℝ.value.N, δˢᵐᵖˢ, λ₁ = λ₁, λ₂ = λ₂, order = 2, initial = false) getfield(:N) clean
+            Ψ₀, Ψ₁, Ψ₂  =  initializeDefaultMatrices(δˢᵐᵖˢ)
+            N = @> solve(Ψ₂, ℝ.value.N; λ₁ = λ₁, λ₂ = λ₂) getfield(:x) clean
             𝕟 = SizeDistribution(
                 [],
                 ℝ.value.De,

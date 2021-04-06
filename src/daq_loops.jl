@@ -49,14 +49,14 @@ function oneHz_smps_loop()
         miny = minimum(miny)
         maxy = maximum(maxy)
 
-        plot4.data[3].ds.x = [currentDiameter, currentDiameter]
-        plot4.data[3].ds.y = [miny, maxy]
+        plot4.data[4].ds.x = [currentDiameter, currentDiameter]
+        plot4.data[4].ds.y = [miny, maxy]
         maxD = @>> get_gtk_property(gui["StartDiameter"], :text, String) parse(Float64)
         minD = @>> get_gtk_property(gui["EndDiameter"], :text, String) parse(Float64)
-        plot4.data[4].ds.x = [minD, minD]
-        plot4.data[4].ds.y = [miny, maxy]
-        plot4.data[5].ds.x = [maxD, maxD]
+        plot4.data[5].ds.x = [minD, minD]
         plot4.data[5].ds.y = [miny, maxy]
+        plot4.data[6].ds.x = [maxD, maxD]
+        plot4.data[6].ds.y = [miny, maxy]
         graph = plot4.strips[1]
         graph.yext = InspectDR.PExtents1D()
         graph.yext_full = InspectDR.PExtents1D(miny, maxy)

@@ -21,8 +21,10 @@ a = plot4.annotation
 a.xlabel = "Diameter (nm)"
 a.ylabels = ["Raw concentration (cm-3)"]
 mp4, gplot4 = push_plot_to_gui!(plot4, gui["AerosolSizeDistribution2"], wnd)
-wfrm = add(plot4, [0.0], [0.0], id = "Current Scan")
+wfrm = add(plot4, [0.0], [0.0], id = "In-progress")
 wfrm.line = line(color = red, width = 2, style = style)
+wfrm = add(plot4, [0.0], [0.0], id = "Completed Scan")
+wfrm.line = line(color = black, width = 2, style = style)
 wfrm = add(plot4, [0.0], [0.0], id = "Selected Scan")
 wfrm.line = line(color = mblue, width = 2, style = style)
 wfrm = add(plot4, [0.0], [0.0], id = "Current D")

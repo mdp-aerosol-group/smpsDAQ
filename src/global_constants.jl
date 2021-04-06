@@ -123,3 +123,4 @@ const c6 = GtkTreeViewColumn("CPC (cm-3)", renderText, Dict([("text", 6)]))
 
 const selection =
     @> GAccessor.selection(treeView) GAccessor.mode(Gtk.GConstants.GtkSelectionMode.SINGLE)
+
