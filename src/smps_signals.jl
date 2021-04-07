@@ -111,7 +111,11 @@ function smps_signals()
             mCPC = parse_missing(inversionParameters[end, :Ncpc])
 
             insert!(listStore,1,(ID, ta, mRH, mN, mA, mV, mCPC))
+            if length(listStore) > 100
+                pop!(listStore)
+            end    
             set_gtk_property!(vAdjust, :value, 0.0)
+
 
             push!(ninv, 𝕟)
             push!(response, ℝ.value)

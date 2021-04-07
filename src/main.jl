@@ -88,9 +88,6 @@ signal_connect(selection, "changed") do widget
         addseries!(reverse(ninv[end-c].Dp), reverse(ninv[end-c].S), plot5, gplot5, 2, false, true)
         addseries!(reverse(response[end].Dp), reverse(response[end].N), plot4, gplot4, 2, false, true)
         addseries!(reverse(response[end-c].Dp), reverse(response[end-c].N), plot4, gplot4, 3, false, true)
-        if length(listStore) > 100
-            pop!(listStore)
-        end
     end
 end
 
