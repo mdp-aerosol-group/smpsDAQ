@@ -75,7 +75,7 @@ function smps_signals()
             λ₁ = parse_box("LambdaLow", 0.05)
             λ₂ = parse_box("LambdaHigh", 0.05)
             Ψ₀, Ψ₁, Ψ₂  =  initializeDefaultMatrices(δˢᵐᵖˢ)
-            N = @> solve(Ψ₂, ℝ.value.N; λ₁ = λ₁, λ₂ = λ₂) getfield(:x) clean
+			N = @> solve(Ψ₀, ℝ.value.N; λ₁ = λ₁, λ₂ = λ₂) getfield(:x) clean
             𝕟 = SizeDistribution(
                 [],
                 ℝ.value.De,
