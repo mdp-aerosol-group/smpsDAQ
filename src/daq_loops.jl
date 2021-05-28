@@ -125,7 +125,7 @@ function tenHz_smps_loop()
             :N2cpcSerial => parse_box("Nserial2", missing),
         ),
     )
-    DataFrame(tenHz_df[end,:]) |> CSV.write("/home/aerosol/Data/"*datestr.value*"tenHz.csv"; append = true)
+    DataFrame(tenHz_df[end,:]) |> CSV.write(path*datestr.value*"tenHz.csv"; append = true)
 end
 
 function oneHz_generic_loop()
@@ -184,7 +184,7 @@ function oneHz_data_file()
             :Tdsa => parse_box("Tdsa1", missing),
         ),
     )
-    DataFrame(oneHz_df[end,:]) |> CSV.write("/home/aerosol/Data/"*datestr.value*"oneHz.csv"; append = true)
+    DataFrame(oneHz_df[end,:]) |> CSV.write(path*datestr.value*"oneHz.csv"; append = true)
 end
 
 function resample((mDp, mN), (newDp, newDe))
