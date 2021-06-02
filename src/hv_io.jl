@@ -31,8 +31,8 @@ function getVdac(setV::Float64, polarity::Symbol, powerSwitch::Bool)
         setVdac = (setV - b) / m
         if setVdac < 0.36
             setVdac = 0.36
-        elseif setVdac > 5.0
-            setVdac = 5.0
+        elseif setVdac > 5.1
+            setVdac = 5.1
         end
         if powerSwitch == false
             setVdac = 5.0

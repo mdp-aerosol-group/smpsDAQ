@@ -157,10 +157,16 @@ function labjackReadWrite(Vdac0, Enable0)
     if (powerSupply == :Ultravolt)
         (Enable0 == true) || (Vdac0 = 0.0)
         sendIt, recordIt = setupLabjackBuffers(Vdac0, 0.0, true, false)
-    else
-        sendIt, recordIt = setupLabjackBuffers(0.0, 0.0, false, false)
+        setLJTDAC(HANDLE, caliInfoTdac, 2, 0.0, Vdac0)
+	elseif (powerSupply == :TRek)
         (Enable0 == true) || (Vdac0 = 0.0)
-        setLJTDAC(HANDLE, caliInfoTdac, 2, Vdac0, Vdac0)
+        sendIt, recordIt = setupLabjackBuffers(0.0, 0.0, false, false)
+		thepolarity = parse_box("ColumnPolaritySMPS")
+		setLJTDAC(HANDLE, caliInfoTdac, 2, eval(thepolarity)(Vdac0), 5.0)
+	else 
+		sendIt, recordIt = setupLabjackBuffers(0.0, 0.0, false, false)
+        (Enable0 == true) || (Vdac0 = 0.0)
+        setLJTDAC(HANDLE, caliInfoTdac, 2, Vdac0, 5.0)
     end
 
     labjackSend(HANDLE, sendIt)

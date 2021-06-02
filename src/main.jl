@@ -22,7 +22,6 @@ using DataStructures
 using RegularizationTools
 
 import NumericIO: UEXPONENT
-
 (@isdefined wnd) && destroy(wnd)
 gui = GtkBuilder(filename = pwd() * "/" * config_file)  # Load GUI
 wnd = gui["mainWindow"]
