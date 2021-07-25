@@ -1,4 +1,4 @@
-# Julia-SMPS-IM
+# smpsDAQ
 Julia SMPS Instrument Manager: Asynchronous functional reactive programming for data acquition and instrument control: Example application to scanning mobility particle sizing.
 
 Hardware requirements: Labjack U6 multifunction DAQ card, LJTick-DAC 0-10V 14 bit analog outputs, High Voltage Power Supply, 1-3 serial ports, 1-3 condensation particle counters, 1 differential mobility analyzer column. Optionally, 2 Rotronic RH sensors for the sheath and sample flow are read.
