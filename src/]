@@ -10,10 +10,14 @@ function oneHz_smps_loop()
     # -    
     # SMPS shifting and inversion
     state = deepcopy(tenHz_df[!, :state])
-    Dp = deepcopy(tenHz_df[!, :scanDiameter])
-    N = deepcopy(tenHz_df[!, :electrometerN])
-    
+    Dp = deepcopy(tenHz_df[!, :currentDiameter])
+    useCounts = get_gtk_property(gui["UseCounts"], :state, Bool)
+    N =
+        (useCounts == true) ? deepcopy(tenHz_df[!, :N1cpcCount]) :
+        deepcopy(tenHz_df[!, :N1cpcSerial])
     τᶜ = @>> get_gtk_property(gui["PlumbTime"], :text, String) parse(Float64)
+    τserial = @>> get_gtk_property(gui["SerialDelay"], :text, String) parse(Float64)
+    (useCounts == false) && (τᶜ += τserial)
     τ = parse_box("BeamTransitTime", 4.0)
 
     correct = @. x ->
@@ -22,6 +26,13 @@ function oneHz_smps_loop()
     if length(N[state.==:SCAN]) > τᶜ * 10 + 1
         N = circshift(N, Int(round(-τᶜ * 10)))
         N = N[(state.==:SCAN).|(state.==:FLUSH)]
+        if (useCounts == true)
+            N = try
+                correct(N)
+            catch
+                N
+            end
+        end
         Dp = Dp[(state.==:SCAN).|(state.==:FLUSH)]
         mDp = reverse(Dp[1:end-Int(round(τᶜ * 10))])
         mN = reverse(N[1:end-Int(round(τᶜ * 10))])
@@ -62,9 +73,6 @@ function tenHz_smps_loop()
     # Acquisition
     AIN, Tk, rawcount, count = labjack_signals1.value # Unpack signals
 
-    vRead1 = -1.0 * AIN[2] * 1000 
-    vRead2 = -1.0 * AIN[4] * 1000 
-
     # CPC Counter
     N1cpcCount = count[1] / tenHz.value / (flowRate1 * 16.6666)  # Compute concentration
     set_gtk_property!(gui["Ncounts1"], :text, @sprintf("%0.1f", N1cpcCount))
@@ -77,16 +85,11 @@ function tenHz_smps_loop()
         (eCharge * qElectrometer.value * 1000.0 / 60.0)
     set_gtk_property!(gui["Ncounts2"], :text, @sprintf("%0.1f", Nelectrometer))
 
-    AIN1, Tk1, rawcount1, count1 = labjack_signals2.value # Second LJ
-
-    vRead3 = AIN1[2] * 1000.0
-    vRead4 = AIN1[3] * 1000.0
-
     # Convert AIN signal to RH,T,P for channels 
     channel = parse_box("SheathAIN", 1)
     RH1, T1, Td1 =
         (channel == -1) ? (missing, missing, missing) :
-        AIN2HC(AIN1, channel + 2, channel + 1)
+        AIN2HC(AIN, channel + 1, channel + 2)
     set_gtk_property!(gui["RHsaFreezer1"], :text, parse_missing(RH1))
     set_gtk_property!(gui["TsaFreezer1"], :text, parse_missing(T1))
     set_gtk_property!(gui["TdsaFreezer1"], :text, parse_missing(Td1))
@@ -104,9 +107,8 @@ function tenHz_smps_loop()
     set_gtk_property!(gui["ScanCounter"], :text, @sprintf("%.1f", smps_elapsed_time.value))
     set_gtk_property!(gui["ScanNumber"], :text, @sprintf("%i", smps_scan_number.value))
     set_gtk_property!(gui["ScanState"], :text, smps_scan_state.value)
-    set_gtk_property!(gui["setV"], :text, @sprintf("%.1f", V.value[2]))
-    set_gtk_property!(gui["readV"], :text, @sprintf("%.1f", vRead4))
-    set_gtk_property!(gui["currentD"], :text, @sprintf("%.1f", Dp.value[2]))
+    set_gtk_property!(gui["setV"], :text, @sprintf("%.1f", V.value))
+    set_gtk_property!(gui["currentD"], :text, @sprintf("%.1f", Dp.value))
 
     # Write data to file
     ts = now()     # Generate current time stamp
@@ -118,26 +120,21 @@ function tenHz_smps_loop()
             :Int64time => Dates.value(ts),
             :LapseTime => @sprintf("%.3f", smps_elapsed_time.value),
             :state => Symbol(smps_scan_state.value),
-            :voltageSet1 => signalV.value[1],
-            :voltageRead1 => vRead1,
-            :voltageSet2 => signalV.value[2],
-            :voltageRead2 => vRead2,
-            :voltageSet3 => signalV.value[3],
-            :voltageRead3 => vRead3,
-            :voltageSet4 => signalV.value[4],
-            :voltageRead4 => vRead4,
-            :setDiameter => classifierD.value,
-            :scanDiameter => Dp.value[2],
-            :N1cpcCount => N1cpcCount,
+            :voltageSet1 => Float64[],
+    :voltageRead1 => Float64[],
+    :voltageSet2 => Float64[],
+    :voltageRead2 => Float64[],
+    :voltageSet3 => Float64[],
+    :voltageRead3 => Float64[],
+    :voltageSet4 => Float64[],
+    :voltageRead4 => Float64[],
+    :setDiameter => Float64[],
+    :scanDiameter => Float64[],
+    :N1cpcCount => Float64[],
+    :N1cpcSerial => Union{Float64,Missing}[],
+    :NElectrometerCount => Float64[],
             :N1cpcSerial => parse_box("Nserial1", missing),
-            :electrometerV => electrometerV,
-            :electrometerN => Nelectrometer,
-            :RHsh => parse_box("RHsaFreezer1", missing),
-            :Tsh => parse_box("TsaFreezer1", missing),
-            :Tdsh => parse_box("TdsaFreezer1", missing),
-            :RHsa => parse_box("RHsa1", missing),
-            :Tsa => parse_box("Tsa1", missing),
-            :Tdsa => parse_box("Tdsa1", missing),
+            :N2cpcSerial => parse_box("Nserial2", missing),
         ),
     )
     DataFrame(tenHz_df[end, :]) |>
@@ -149,13 +146,14 @@ function oneHz_generic_loop()
 
     # CPC I/O
     Nserial1 = readCPC(port1, CPCType1, flowRate1)
-    Nelectrometer = get_gtk_property(gui["Ncounts2"], :text, String) |> x -> parse(Float64, x)
-
+    Nserial2 = readCPC(port2, CPCType2, flowRate2)
 
     set_gtk_property!(gui["Nserial1"], :text, parse_missing(Nserial1))
+    set_gtk_property!(gui["Nserial2"], :text, parse_missing(Nserial2))
     (typeof(Nserial1) == Missing) ||
         addpoint!(t, Nserial1, plotParticle, gplotParticle, 1, true)
-    addpoint!(t, Nelectrometer, plotParticle, gplotParticle, 1, true)
+    (typeof(Nserial2) == Missing) ||
+        addpoint!(t, Nserial2, plotParticle, gplotParticle, 2, true)
 
     # Rotronic RH Sensor
     T1s = get_gtk_property(gui["TsaFreezer1"], :text, String)
@@ -172,6 +170,35 @@ function oneHz_generic_loop()
     (typeof(T2) == Missing) || addpoint!(t, T2, plotOpticaT, gplotOpticaT, 2, true)
     (typeof(T1) == Missing) || addpoint!(t, Tdew_Rot1, plotOpticaT, gplotOpticaT, 3, true)
     (typeof(T2) == Missing) || addpoint!(t, Tdew_Rot2, plotOpticaT, gplotOpticaT, 4, true)
+end
+
+function oneHz_data_file()
+    # Write data to file
+    ts = now()     # Generate current time stamp
+
+    push!(
+        oneHz_df,
+        Dict(
+            :Timestamp => ts,
+            :Unixtime => datetime2unix(ts),
+            :Int64time => Dates.value(ts),
+            :LapseTime => @sprintf("%.3f", main_elapsed_time.value),
+            :state => Symbol(smps_scan_state.value),
+            :powerSMPS => powerSMPS.value,
+            :VoltageSMPS => V.value,
+            :currentDiameter => Dp.value,
+            :N1cpcSerial => parse_box("Nserial1", missing),
+            :N2cpcSerial => parse_box("Nserial2", missing),
+            :RHsh => parse_box("RHsaFreezer1", missing),
+            :Tsh => parse_box("TsaFreezer1", missing),
+            :Tdsh => parse_box("TdsaFreezer1", missing),
+            :RHsa => parse_box("RHsa1", missing),
+            :Tsa => parse_box("Tsa1", missing),
+            :Tdsa => parse_box("Tdsa1", missing),
+        ),
+    )
+    DataFrame(oneHz_df[end, :]) |>
+    CSV.write(path * datestr.value * "oneHz.csv"; append = true)
 end
 
 function resample((mDp, mN), (newDp, newDe))

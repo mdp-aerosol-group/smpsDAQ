@@ -4,7 +4,7 @@
 
 
 # This function sets the send and receive buffers
-function setupLabjackBuffers(Vdac0, Vdac1, BitFIO3, BitFIO4)
+function setupLabjackBuffers(Vdac0, Vdac1, BitFIO3, BitFIO4; gain1 = 4)
     # See pg. 83 of U6 Datasheet for protocol
     # Maintain C style zero indexing for bytes by using +1
 
@@ -56,8 +56,8 @@ function setupLabjackBuffers(Vdac0, Vdac1, BitFIO3, BitFIO4)
     # AIN0
     sendBuff[7+1] = 2          # IOType is AIN24
     sendBuff[8+1] = 0          # Channel 0
-    sendBuff[9+1] = 9 + 0 * 16   # Resolution & Gain
-    sendBuff[10+1] = 0 + 0 * 128  # Settling & Differential 
+    sendBuff[9+1] = 9 + gain1 * 8   # Resolution & Gain
+    sendBuff[10+1] = 0 + 0 * 128    # Settling & Differential 
 
     # AIN1
     sendBuff[11+1] = 2          # IOType is AIN24
@@ -153,21 +153,13 @@ function setupLabjackBuffers(Vdac0, Vdac1, BitFIO3, BitFIO4)
     return send, rec
 end
 
-function labjackReadWrite(Vdac0, Enable0)
-    if (powerSupply == :Ultravolt)
-        (Enable0 == true) || (Vdac0 = 0.0)
-        sendIt, recordIt = setupLabjackBuffers(Vdac0, 0.0, true, false)
-        setLJTDAC(HANDLE, caliInfoTdac, 2, 0.0, Vdac0)
-	elseif (powerSupply == :TRek)
-        (Enable0 == true) || (Vdac0 = 0.0)
-        sendIt, recordIt = setupLabjackBuffers(0.0, 0.0, false, false)
-		thepolarity = parse_box("ColumnPolaritySMPS")
-		setLJTDAC(HANDLE, caliInfoTdac, 2, eval(thepolarity)(Vdac0), 5.0)
-	else 
-		sendIt, recordIt = setupLabjackBuffers(0.0, 0.0, false, false)
-        (Enable0 == true) || (Vdac0 = 0.0)
-        setLJTDAC(HANDLE, caliInfoTdac, 2, Vdac0, 5.0)
+function labjackReadWrite(HANDLE, Vdac0, Vdac1, caliInfo; caliInfoTdac = false, gain1 = 4)
+
+    if ~isa(caliInfoTdac, Bool)
+        setLJTDAC(HANDLE, caliInfoTdac, 0, Vdac0, Vdac1)
     end
+    # AIN0 (gain1) is set to 4 for high res acquisition of voltage.
+    sendIt, recordIt = setupLabjackBuffers(Vdac0, Vdac1, true, true; gain1 = gain1)
 
     labjackSend(HANDLE, sendIt)
     labjackRead!(HANDLE, recordIt)

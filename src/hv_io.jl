@@ -1,15 +1,3 @@
-function foo()
-    useCal = get_gtk_property(gui["UseCalibration"], :state, Bool)
-    c = get_gtk_property(gui["PowersupplyCalibrationFunction"], :text, String) |> Meta.parse
-    calVdac0 = eval(c)
-    calVdac0 = (calVdac0 > 0) ? calVdac0 : 0.0
-    if useCal == true
-        Vdac0 = (Enable0 == true) ? calVdac0 : 0.0
-    else
-        Vdac0 = (Enable0 == true) ? Vdac0 : 0.0
-    end
-end
-
 function calibrateVoltage(v)
     useCal = get_gtk_property(gui["UseCalibration"], :state, Bool)
     c = get_gtk_property(gui["PowersupplyCalibrationFunction"], :text, String) |> Meta.parse

@@ -8,6 +8,7 @@ const lpm = 1.666666e-5
 const lowerDchart = parse_box("LowerDchart", 5.0)
 const upperDchart = parse_box("UpperDchart", 5.0)
 const bufferlength = 400
+const eCharge = 1.602176634e−19
 
 const t = parse_box("TemperatureSMPS", 22.0) + 273.15
 const p = parse_box("PressureSMPS", 1001.0) * 100.0
@@ -16,9 +17,9 @@ const qsa = parse_box("SampleFlowSMPS", 1.0) * lpm
 const leff = parse_box("EffectiveLength", 0.0)
 const bins = parse_box("NumberOfBins", 120)
 const τᶜ = parse_box("PlumbTime", 4.1)
-const polarity = parse_box("ColumnPolaritySMPS")
-const powerSupply = parse_box("DMAPowerSupply")
-const column = parse_box("DMATypeSMPS")
+const polarity = :-
+const powerSupply = :Spellman
+const column = :HFDMA
 const Λˢᵐᵖˢ, δˢᵐᵖˢ = set_SMPS_config()
 const path = mapreduce(a -> "/" * a, *, (pwd()|>x->split(x, "/"))[2:3]) * "/Data/"
 
@@ -32,25 +33,20 @@ const tenHz_df = DataFrame(
     Int64time = Int64[],
     LapseTime = String[],
     state = Symbol[],
-    voltageSet = Float64[],
-    currentDiameter = Float64[],
+    voltageSet1 = Float64[],
+    voltageRead1 = Float64[],
+    voltageSet2 = Float64[],
+    voltageRead2 = Float64[],
+    voltageSet3 = Float64[],
+    voltageRead3 = Float64[],
+    voltageSet4 = Float64[],
+    voltageRead4 = Float64[],
+    setDiameter = Float64[],
+    scanDiameter = Float64[],
     N1cpcCount = Float64[],
-    N2cpcCount = Float64[],
     N1cpcSerial = Union{Float64,Missing}[],
-    N2cpcSerial = Union{Float64,Missing}[],
-)
-
-const oneHz_df = DataFrame(
-    Timestamp = DateTime[],
-    Unixtime = Float64[],
-    Int64time = Int64[],
-    LapseTime = String[],
-    state = Symbol[],
-    powerSMPS = Bool[],
-    VoltageSMPS = Float64[],
-    currentDiameter = Float64[],
-    N1cpcSerial = Union{Float64,Missing}[],
-    N2cpcSerial = Union{Float64,Missing}[],
+    electrometerV = Float64[],
+    electrometerN = Float64[],
     RHsh = Union{Float64,Missing}[],
     Tsh = Union{Float64,Missing}[],
     Tdsh = Union{Float64,Missing}[],
@@ -97,13 +93,29 @@ const id1 = signal_connect(mainWindow, "destroy") do widget, others...
 end
 
 const sbox = gui["ClassifierDiameter"]
+const classifierD = Signal(get_gtk_property(sbox, "value", Float64))
 const id2 = signal_connect(sbox, "value-changed") do widget, others...
     set_voltage_SPINBox(sbox, "ClassifierV")
+    cD = get_gtk_property(sbox, "value", Float64)
+    push!(classifierD, cD)
+end
+
+const sboxBaseline = gui["Baseline"]
+const vBaseline = Signal(get_gtk_property(sboxBaseline, "value", Float64))
+const id10 = signal_connect(sboxBaseline, "value-changed") do widget, others...
+     vB = get_gtk_property(sboxBaseline, "value", Float64)
+     push!(vBaseline, vB)
+end
+
+const sboxElectrometerFlow = gui["ElectrometerFlow"]
+const qElectrometer = Signal(get_gtk_property(sboxElectrometerFlow, "value", Float64))
+const id11 = signal_connect(sboxElectrometerFlow, "value-changed") do widget, others...
+     q = get_gtk_property(sboxElectrometerFlow, "value", Float64)
+     push!(qElectrometer, q)
 end
 
 const id3 = signal_connect(startDiameterChanged, gui["StartDiameter"], "focus-out-event")
 const id4 = signal_connect(endDiameterChanged, gui["EndDiameter"], "focus-out-event")
-const id5 = signal_connect(powerSMPSswitch, gui["UltravoltEnableSMPS"], "state-set")
 
 # Set up list store
 const viewport = gui["tree"]
